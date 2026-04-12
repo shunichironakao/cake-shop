@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>はじめてのケーキやさん</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --pink: #FFB6C1;
+  --pink-dark: #FF8FA3;
+  --cream: #FFF8E7;
+  --mint: #B5EAD7;
+  --lavender: #E8D5F5;
+  --yellow-light: #FFF9E3;
+  --blue-light: #E0F4FF;
+  --white: #FFFCF9;
+  --text: #5C4033;
+  --text-light: #8B7355;
+  --shadow: rgba(180, 140, 120, 0.15);
+  --radius: 20px;
+  --radius-lg: 28px;
+}
+
+html, body {
+  height: 100%;
+  font-family: "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Kosugi Maru", system-ui, sans-serif;
+  background: linear-gradient(180deg, #FFF0F5 0%, #FFFAF0 50%, #F0FFF0 100%);
+  color: var(--text);
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#app {
+  max-width: 420px;
+  margin: 0 auto;
+  height: 100dvh;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transition: opacity 0.3s ease;
+}
+.screen.active {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Typography */
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+.title-logo {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #D4748B;
+  text-shadow: 2px 2px 0 rgba(255,182,193,0.4);
+  text-align: center;
+  margin: 12px 0 8px;
+  line-height: 1.3;
+}
+.sub-text {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  text-align: center;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 12px 32px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow: 0 4px 12px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px var(--shadow);
+}
+.btn-primary {
+  background: linear-gradient(135deg, #FF9EB5 0%, #FFB6C1 100%);
+  color: white;
+  min-width: 200px;
+  font-size: 1.5rem;
+}
+.btn-primary:active { background: linear-gradient(135deg, #FF8FA3 0%, #FFB6C1 100%); }
+
+.btn-action {
+  background: linear-gradient(135deg, #FFD4A8 0%, #FFBB85 100%);
+  color: white;
+  min-width: 140px;
+}
+.btn-secondary {
+  background: white;
+  color: var(--text);
+  border: 2px solid #EED6CC;
+  min-width: 100px;
+  font-size: 1.1rem;
+}
+.btn-small {
+  min-height: 48px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  min-width: auto;
+}
+.btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 8px 0;
+}
+
+/* Choice cards */
+.choices {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 110px;
+  background: white;
+  border: 3px solid #F0E0D8;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  padding: 8px;
+}
+.choice-card:active { transform: scale(0.95); }
+.choice-card.selected {
+  border-color: var(--pink);
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(255,182,193,0.4);
+}
+.choice-card svg { width: 60px; height: 60px; }
+.choice-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-top: 4px;
+  color: var(--text);
+}
+
+/* Color choices */
+.color-choices {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.color-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 4px solid #F0E0D8;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.color-btn:active { transform: scale(0.93); }
+.color-btn.selected {
+  border-color: var(--pink-dark);
+  transform: scale(1.12);
+  box-shadow: 0 4px 16px rgba(255,143,163,0.4);
+}
+.color-btn-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Topping palette */
+.topping-palette {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+.topping-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 72px;
+  background: white;
+  border: 2px solid #F0E0D8;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.12s;
+  padding: 4px;
+}
+.topping-btn:active { transform: scale(0.9); }
+.topping-btn svg { width: 36px; height: 36px; }
+.topping-btn-label { font-size: 0.65rem; font-weight: 700; color: var(--text); }
+
+/* Cake preview */
+.cake-preview {
+  position: relative;
+  width: 220px;
+  height: 180px;
+  margin: 8px auto;
+}
+.cake-preview.lg { width: 280px; height: 220px; }
+.cake-preview .cake-base,
+.cake-preview .cake-cream {
+  position: absolute;
+  inset: 0;
+}
+.cake-preview .cake-base svg,
+.cake-preview .cake-cream svg {
+  width: 100%;
+  height: 100%;
+}
+.cake-preview .topping-item {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  transition: transform 0.2s ease, opacity 0.2s;
+  animation: popIn 0.25s ease;
+}
+.cake-preview.lg .topping-item { width: 40px; height: 40px; }
+
+@keyframes popIn {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  70% { transform: scale(1.15) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Customer */
+.customer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0;
+}
+.customer-avatar { width: 100px; height: 100px; }
+.customer-avatar svg { width: 100%; height: 100%; }
+
+/* Speech bubble */
+.speech-bubble {
+  background: white;
+  border: 2px solid #F0E0D8;
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin: 8px 0;
+  position: relative;
+  max-width: 300px;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid white;
+}
+.speech-bubble .order-icons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+}
+.speech-bubble .order-icons svg { width: 30px; height: 30px; }
+.speech-bubble .order-icon-color {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+}
+
+/* Topping counter */
+.topping-counter {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  background: rgba(255,255,255,0.8);
+  border-radius: 12px;
+}
+.topping-counter-item { display: flex; align-items: center; gap: 2px; }
+.topping-counter-item svg { width: 20px; height: 20px; }
+
+/* Reward */
+.hearts-display {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0;
+}
+.hearts-display .heart-icon { width: 48px; height: 48px; animation: heartBeat 0.5s ease; }
+.hearts-display .heart-icon:nth-child(2) { animation-delay: 0.15s; }
+.hearts-display .heart-icon:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes heartBeat {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.sticker-display {
+  width: 90px;
+  height: 90px;
+  margin: 8px auto;
+  animation: stickerAppear 0.6s ease;
+}
+.sticker-display svg { width: 100%; height: 100%; }
+
+@keyframes stickerAppear {
+  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+  60% { transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Sparkles */
+.sparkle-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.sparkle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  animation: sparkleFloat 1.5s ease forwards;
+}
+@keyframes sparkleFloat {
+  0% { transform: scale(0) rotate(0); opacity: 0; }
+  30% { transform: scale(1) rotate(40deg); opacity: 1; }
+  100% { transform: scale(0.5) rotate(120deg) translateY(-30px); opacity: 0; }
+}
+
+/* Title screen specifics */
+.title-character {
+  width: 150px;
+  height: 150px;
+  margin: 12px 0;
+  animation: gentleBounce 3s ease-in-out infinite;
+}
+.title-character svg { width: 100%; height: 100%; }
+
+@keyframes gentleBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Sparkle stars on title */
+.title-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.title-star {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  animation: twinkle 2.5s ease-in-out infinite;
+}
+.title-star svg { width: 100%; height: 100%; }
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  50% { opacity: 0.7; transform: scale(1) rotate(20deg); }
+}
+
+/* Decorative bg */
+.bg-decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.bg-decoration .cloud {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+/* Settings icon buttons */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.7);
+  border: 2px solid #EED6CC;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.icon-btn:active { transform: scale(0.95); }
+.bottom-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: auto;
+  padding: 8px 0 4px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 340px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.modal h2 { font-size: 1.2rem; text-align: center; margin-bottom: 16px; }
+.modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0E0D8;
+}
+.modal-row:last-child { border-bottom: none; }
+.modal-row label { font-size: 1rem; font-weight: 600; }
+
+/* Toggle */
+.toggle {
+  width: 56px;
+  height: 32px;
+  background: #DDD;
+  border-radius: 16px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+}
+.toggle.on { background: var(--pink); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.toggle.on::after { transform: translateX(24px); }
+
+/* Difficulty select */
+.diff-select {
+  display: flex;
+  gap: 8px;
+}
+.diff-btn {
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 2px solid #EED6CC;
+  background: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+}
+.diff-btn.active {
+  background: var(--pink);
+  color: white;
+  border-color: var(--pink);
+}
+
+/* Shake animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.shake { animation: shake 0.3s ease; }
+
+/* Serve animation */
+@keyframes serveCake {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(0.9); }
+  100% { transform: translateY(40px) scale(0.7); opacity: 0.5; }
+}
+.serve-anim { animation: serveCake 0.7s ease forwards; }
+
+/* Reaction text */
+.reaction-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  animation: popIn 0.4s ease;
+  margin: 8px 0;
+}
+
+/* Author credits */
+.credits {
+  font-size: 0.6rem;
+  color: #bbb;
+  text-align: center;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-height: 640px) {
+  .title-character { width: 100px; height: 100px; }
+  .cake-preview { width: 180px; height: 140px; }
+  .cake-preview.lg { width: 220px; height: 170px; }
+  .heading { font-size: 1.2rem; }
+  .btn { min-height: 52px; font-size: 1.1rem; }
+  .btn-primary { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== TITLE SCREEN ===== -->
+  <div id="screen-title" class="screen active">
+    <div class="bg-decoration">
+      <div class="cloud" style="width:80px;height:40px;top:8%;left:5%"></div>
+      <div class="cloud" style="width:120px;height:50px;top:3%;right:10%"></div>
+      <div class="cloud" style="width:60px;height:30px;top:15%;left:55%"></div>
+    </div>
+    <div class="title-sparkles" id="title-sparkles"></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1">
+      <div class="title-logo">はじめての<br>ケーキやさん</div>
+      <div class="title-character" id="title-char"></div>
+      <button class="btn btn-primary" onclick="startGame()">はじめる</button>
+      <div class="credits" style="margin-top:12px">
+        作成者: Shunichiro Nakao, MD, MSc, PhD<br>
+        Department of Traumatology and Acute Critical Medicine, The University of Osaka
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <button class="icon-btn" onclick="toggleSound()">
+        <span id="sound-icon">&#9834;</span> <span id="sound-label">おと</span>
+      </button>
+      <button class="icon-btn" onclick="openSettings()">
+        &#9881; ほごしゃ
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== ORDER SCREEN ===== -->
+  <div id="screen-order" class="screen">
+    <div class="heading">おきゃくさん</div>
+    <div class="customer-area">
+      <div class="customer-avatar" id="order-customer"></div>
+      <div id="customer-name" style="font-weight:700;margin-top:4px"></div>
+    </div>
+    <div class="speech-bubble" id="order-bubble">
+      <div id="order-text"></div>
+      <div class="order-icons" id="order-icons"></div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="replayOrder()">もういちど きく</button>
+      <button class="btn btn-action" onclick="goScreen('base')">つくる</button>
+    </div>
+  </div>
+
+  <!-- ===== BASE SELECT ===== -->
+  <div id="screen-base" class="screen">
+    <div class="heading">どのケーキにする？</div>
+    <div class="choices" id="base-choices"></div>
+    <div class="cake-preview" id="base-preview"></div>
+    <div style="flex:1"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-small" onclick="goScreen('order')">もどる</button>
+      <button class="btn btn-action" id="base-next-btn" disabled onclick="goScreen('cream')">つぎへ</button>
+    </div>
+  </div>
+
+  <!-- ===== CREAM SELECT ===== -->
+  <div id="screen-cream" class="screen">
+    <div class="heading">クリームをえらぼう</div>
+    <div class="cake-preview" id="cream-preview"></div>
+    <div class="color-choices" id="cream-choices"></div>
+    <div style="flex:1"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-small" onclick="goScreen('base')">もどる</button>
+      <button class="btn btn-action" id="cream-next-btn" disabled onclick="goScreen('topping')">つぎへ</button>
+    </div>
+  </div>
+
+  <!-- ===== TOPPING SCREEN ===== -->
+  <div id="screen-topping" class="screen">
+    <div class="heading">トッピングしよう</div>
+    <div class="cake-preview lg" id="topping-preview"></div>
+    <div class="topping-counter" id="topping-counter"></div>
+    <div class="topping-palette" id="topping-palette"></div>
+    <div style="flex:1"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-small" onclick="goScreen('cream')">もどる</button>
+      <button class="btn btn-secondary btn-small" onclick="undoTopping()">ひとつもどす</button>
+      <button class="btn btn-action" onclick="goScreen('result')">できあがり</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-small" style="font-size:0.85rem" onclick="resetToppings()">ぜんぶやりなおし</button>
+    </div>
+  </div>
+
+  <!-- ===== RESULT SCREEN ===== -->
+  <div id="screen-result" class="screen">
+    <div class="heading">できあがり！</div>
+    <div class="cake-preview lg" id="result-cake"></div>
+    <div class="customer-area">
+      <div class="customer-avatar" id="result-customer"></div>
+    </div>
+    <div id="result-reaction" class="reaction-text" style="display:none"></div>
+    <div style="flex:1"></div>
+    <div class="btn-row" id="result-buttons">
+      <button class="btn btn-action" onclick="serveCake()">どうぞ</button>
+      <button class="btn btn-secondary btn-small" onclick="goScreen('topping')">もどって なおす</button>
+    </div>
+    <div class="btn-row" id="result-after" style="display:none">
+      <button class="btn btn-primary" onclick="goScreen('reward')">つぎへ</button>
+    </div>
+  </div>
+
+  <!-- ===== REWARD SCREEN ===== -->
+  <div id="screen-reward" class="screen">
+    <div class="heading">よくできました！</div>
+    <div class="hearts-display" id="reward-hearts"></div>
+    <div id="reward-text" class="reaction-text"></div>
+    <div class="sticker-display" id="reward-sticker"></div>
+    <div style="flex:1"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextCustomer()">つぎの おきゃくさん</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-small" onclick="goScreen('title')">タイトルへ</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h2>ほごしゃ せってい</h2>
+    <div class="modal-row">
+      <label>おと</label>
+      <button class="toggle" id="toggle-voice" onclick="toggleSettingVoice()"></button>
+    </div>
+    <div class="modal-row">
+      <label>BGM</label>
+      <button class="toggle" id="toggle-bgm" onclick="toggleSettingBgm()"></button>
+    </div>
+    <div class="modal-row">
+      <label>むずかしさ</label>
+      <div class="diff-select">
+        <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">かんたん</button>
+        <button class="diff-btn" id="diff-normal" onclick="setDifficulty('normal')">ふつう</button>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-secondary btn-small" onclick="closeSettings()">とじる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SVG GRAPHICS =====
+const SVG = {
+  cakeBase(shape) {
+    if (shape === 'round') {
+      return `<svg viewBox="0 0 200 150">
+        <ellipse cx="100" cy="138" rx="80" ry="8" fill="#e8c4c4" opacity="0.4"/>
+        <rect x="20" y="90" width="160" height="45" rx="12" fill="#FADADD"/>
+        <ellipse cx="100" cy="90" rx="80" ry="18" fill="#FFE4E8"/>
+        <ellipse cx="100" cy="135" rx="85" ry="10" fill="#FFC0CB" opacity="0.7"/>
+        <circle cx="50" cy="110" r="4" fill="#FFB6C1" opacity="0.7"/>
+        <circle cx="75" cy="107" r="4" fill="#FFB6C1" opacity="0.7"/>
+        <circle cx="100" cy="110" r="4" fill="#FFB6C1" opacity="0.7"/>
+        <circle cx="125" cy="107" r="4" fill="#FFB6C1" opacity="0.7"/>
+        <circle cx="150" cy="110" r="4" fill="#FFB6C1" opacity="0.7"/>
+      </svg>`;
+    }
+    if (shape === 'heart') {
+      return `<svg viewBox="0 0 200 160">
+        <ellipse cx="100" cy="148" rx="78" ry="8" fill="#e8c4c4" opacity="0.4"/>
+        <path d="M30,115 Q100,155 170,115 L165,135 Q100,165 35,135 Z" fill="#FADADD"/>
+        <path d="M100,110 C100,110 35,85 35,60 C35,42 50,32 65,38 C78,43 100,60 100,60 C100,60 122,43 135,38 C150,32 165,42 165,60 C165,85 100,110 100,110 Z" fill="#FFE4E8"/>
+        <path d="M65,45 C68,42 74,42 77,46" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+        <ellipse cx="100" cy="145" rx="80" ry="10" fill="#FFC0CB" opacity="0.6"/>
+      </svg>`;
+    }
+    if (shape === 'star') {
+      return `<svg viewBox="0 0 200 150">
+        <ellipse cx="100" cy="138" rx="78" ry="8" fill="#e8c4c4" opacity="0.4"/>
+        <path d="M100,20 L112,58 L152,58 L120,80 L132,118 L100,96 L68,118 L80,80 L48,58 L88,58 Z" fill="#FFE4E8"/>
+        <ellipse cx="82" cy="48" rx="6" ry="4" fill="white" opacity="0.6" transform="rotate(-20,82,48)"/>
+        <ellipse cx="100" cy="135" rx="80" ry="10" fill="#FFC0CB" opacity="0.6"/>
+      </svg>`;
+    }
+    return '';
+  },
+
+  cream(shape, color = '#fff5f5') {
+    const darkMap = { '#fff5f5': '#FFD6DC', '#FFB6C1': '#FF8FA3', '#FFF8DC': '#FFE57A', '#B0E0E6': '#7EC8CF' };
+    const dark = darkMap[color] || '#FFD6DC';
+    if (shape === 'round') {
+      return `<svg viewBox="0 0 200 150">
+        <path d="M22,90 C30,75 38,85 46,75 C54,65 62,78 70,68 C78,58 86,72 94,62 C102,52 110,68 118,58 C126,48 134,64 142,54 C150,44 158,60 166,52 C174,44 180,62 178,90 Z" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <path d="M30,82 C38,68 46,80 54,70" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+        <path d="M130,58 C138,46 146,58 154,50" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+      </svg>`;
+    }
+    if (shape === 'heart') {
+      return `<svg viewBox="0 0 200 160">
+        <path d="M100,115 C95,105 75,98 60,90 C45,82 38,75 38,65 C38,52 48,45 60,50 C72,55 88,68 100,75 C112,68 128,55 140,50 C152,45 162,52 162,65 C162,75 155,82 140,90 C125,98 105,105 100,115 Z" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <path d="M62,52 C66,48 70,54 74,50" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+      </svg>`;
+    }
+    if (shape === 'star') {
+      return `<svg viewBox="0 0 200 150">
+        <path d="M100,25 L110,55 L142,55 L118,73 L128,103 L100,86 L72,103 L82,73 L58,55 L90,55 Z" fill="${color}" stroke="${dark}" stroke-width="2"/>
+        <path d="M88,45 C91,40 95,46 98,42" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+      </svg>`;
+    }
+    return '';
+  },
+
+  topping(type) {
+    const toppings = {
+      strawberry: `<svg viewBox="0 0 40 40">
+        <path d="M20,10 C18,5 13,6 14,10" fill="#5DC863"/>
+        <path d="M20,10 C22,5 27,6 26,10" fill="#5DC863"/>
+        <path d="M12,16 C10,22 13,33 20,34 C27,33 30,22 28,16 C26,12 22,10 20,10 C18,10 14,12 12,16 Z" fill="#FF4757"/>
+        <ellipse cx="17" cy="20" rx="1.2" ry="1" fill="#FFE0E0"/>
+        <ellipse cx="22" cy="18" rx="1.2" ry="1" fill="#FFE0E0"/>
+        <ellipse cx="20" cy="26" rx="1.2" ry="1" fill="#FFE0E0"/>
+        <ellipse cx="16" cy="17" rx="2.5" ry="2" fill="white" opacity="0.4" transform="rotate(-20,16,17)"/>
+      </svg>`,
+      banana: `<svg viewBox="0 0 40 40">
+        <path d="M8,30 C6,22 10,10 20,8 C28,6 35,12 34,20 C33,26 28,30 22,28" fill="none" stroke="#FFD700" stroke-width="9" stroke-linecap="round"/>
+        <path d="M8,30 C6,22 10,10 20,8 C28,6 35,12 34,20 C33,26 28,30 22,28" fill="none" stroke="#FFF176" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="8" cy="30" r="3" fill="#C8A000"/>
+        <circle cx="22" cy="28" r="3" fill="#C8A000"/>
+      </svg>`,
+      cherry: `<svg viewBox="0 0 40 40">
+        <path d="M14,20 C14,15 20,10 20,8" stroke="#5DC863" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M26,20 C26,15 20,10 20,8" stroke="#5DC863" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <circle cx="13" cy="24" r="7" fill="#E8003A"/>
+        <circle cx="27" cy="24" r="7" fill="#E8003A"/>
+        <ellipse cx="10" cy="21" rx="2.5" ry="2" fill="white" opacity="0.5" transform="rotate(-20,10,21)"/>
+        <ellipse cx="24" cy="21" rx="2.5" ry="2" fill="white" opacity="0.5" transform="rotate(-20,24,21)"/>
+      </svg>`,
+      cookie: `<svg viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="16" fill="#C68642"/>
+        <circle cx="20" cy="20" r="14" fill="#D4956A" opacity="0.5"/>
+        <ellipse cx="14" cy="16" rx="2.5" ry="2" fill="#5C3317"/>
+        <ellipse cx="24" cy="14" rx="2.5" ry="2" fill="#5C3317"/>
+        <ellipse cx="12" cy="24" rx="2.5" ry="2" fill="#5C3317"/>
+        <ellipse cx="26" cy="24" rx="2.5" ry="2" fill="#5C3317"/>
+        <ellipse cx="20" cy="20" rx="2.5" ry="2" fill="#5C3317"/>
+      </svg>`,
+      heart: `<svg viewBox="0 0 40 40">
+        <path d="M20,32 C20,32 6,22 6,14 C6,8 11,5 15,8 C17,9 20,13 20,13 C20,13 23,9 25,8 C29,5 34,8 34,14 C34,22 20,32 20,32 Z" fill="#E8527A"/>
+        <ellipse cx="14" cy="12" rx="3" ry="2" fill="white" opacity="0.45" transform="rotate(-30,14,12)"/>
+      </svg>`,
+      candle: `<svg viewBox="0 0 40 40">
+        <ellipse cx="20" cy="10" rx="6" ry="8" fill="#FFD700" opacity="0.3"/>
+        <path d="M20,5 C17,8 15,12 17,15 C18,17 20,17 20,17 C20,17 22,17 23,15 C25,12 23,8 20,5 Z" fill="#FF8C00"/>
+        <path d="M20,7 C18,10 17,13 19,15 C19.5,16 20,16 20,16 C20,16 20.5,16 21,15 C23,13 22,10 20,7 Z" fill="#FFD700"/>
+        <line x1="20" y1="17" x2="20" y2="20" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+        <rect x="14" y="20" width="12" height="16" rx="3" fill="#FFB6C1"/>
+        <path d="M14,26 Q20,28 26,26" stroke="white" stroke-width="1.5" fill="none" opacity="0.7"/>
+        <path d="M14,30 Q20,32 26,30" stroke="white" stroke-width="1.5" fill="none" opacity="0.7"/>
+      </svg>`
+    };
+    return toppings[type] || '';
+  },
+
+  character(type) {
+    const chars = {
+      rabbit_patissier: `<svg viewBox="0 0 120 120">
+        <rect x="38" y="18" width="44" height="6" rx="3" fill="#F0F0F0" stroke="#DDD" stroke-width="0.8"/>
+        <rect x="42" y="4" width="36" height="18" rx="8" fill="white" stroke="#DDD" stroke-width="0.8"/>
+        <ellipse cx="60" cy="4" rx="14" ry="5" fill="white" stroke="#DDD" stroke-width="0.8"/>
+        <ellipse cx="42" cy="36" rx="7" ry="14" fill="white" stroke="#EEE" stroke-width="1"/>
+        <ellipse cx="42" cy="36" rx="4" ry="10" fill="#FFB6C1"/>
+        <ellipse cx="78" cy="36" rx="7" ry="14" fill="white" stroke="#EEE" stroke-width="1"/>
+        <ellipse cx="78" cy="36" rx="4" ry="10" fill="#FFB6C1"/>
+        <circle cx="60" cy="60" r="26" fill="white" stroke="#EEE" stroke-width="1"/>
+        <circle cx="51" cy="57" r="4" fill="#333"/><circle cx="69" cy="57" r="4" fill="#333"/>
+        <circle cx="52.5" cy="55.5" r="1.5" fill="white"/><circle cx="70.5" cy="55.5" r="1.5" fill="white"/>
+        <ellipse cx="46" cy="64" rx="5" ry="3" fill="#FFB6C1" opacity="0.6"/>
+        <ellipse cx="74" cy="64" rx="5" ry="3" fill="#FFB6C1" opacity="0.6"/>
+        <ellipse cx="60" cy="65" rx="3" ry="2" fill="#FFB6C1"/>
+        <path d="M53,70 Q60,76 67,70" stroke="#FF8FA3" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="60" cy="100" rx="20" ry="14" fill="white" stroke="#EEE" stroke-width="1"/>
+        <rect x="50" y="86" width="20" height="22" rx="6" fill="#FFE4E8" stroke="#FFB6C1" stroke-width="1"/>
+        <path d="M55,90 C52,87 50,89 53,91 C55,92 57,90 60,90 C63,90 65,92 67,91 C70,89 68,87 65,90" fill="#FFB6C1"/>
+      </svg>`,
+      bear: `<svg viewBox="0 0 120 120">
+        <circle cx="38" cy="34" r="14" fill="#C68642"/><circle cx="38" cy="34" r="9" fill="#E8A870"/>
+        <circle cx="82" cy="34" r="14" fill="#C68642"/><circle cx="82" cy="34" r="9" fill="#E8A870"/>
+        <circle cx="60" cy="62" r="30" fill="#C68642"/>
+        <ellipse cx="60" cy="72" rx="13" ry="9" fill="#E8A870"/>
+        <circle cx="50" cy="58" r="5" fill="#333"/><circle cx="70" cy="58" r="5" fill="#333"/>
+        <circle cx="51.5" cy="56.5" r="2" fill="white"/><circle cx="71.5" cy="56.5" r="2" fill="white"/>
+        <ellipse cx="44" cy="67" rx="6" ry="4" fill="#FFB6C1" opacity="0.55"/>
+        <ellipse cx="76" cy="67" rx="6" ry="4" fill="#FFB6C1" opacity="0.55"/>
+        <ellipse cx="60" cy="70" rx="4" ry="3" fill="#8B5A2B"/>
+        <path d="M52,76 Q60,83 68,76" stroke="#8B5A2B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="60" cy="105" rx="22" ry="14" fill="#C68642"/>
+        <ellipse cx="60" cy="105" rx="14" ry="10" fill="#E8A870"/>
+      </svg>`,
+      cat: `<svg viewBox="0 0 120 120">
+        <polygon points="34,44 26,18 48,36" fill="#E8834A"/>
+        <polygon points="34,44 30,26 46,36" fill="#FFB6C1"/>
+        <polygon points="86,44 94,18 72,36" fill="#E8834A"/>
+        <polygon points="86,44 90,26 74,36" fill="#FFB6C1"/>
+        <circle cx="60" cy="64" r="30" fill="#E8834A"/>
+        <ellipse cx="60" cy="74" rx="12" ry="8" fill="#FDE8D0"/>
+        <ellipse cx="50" cy="60" rx="5" ry="5.5" fill="#4CAF50"/>
+        <ellipse cx="70" cy="60" rx="5" ry="5.5" fill="#4CAF50"/>
+        <ellipse cx="50" cy="60" rx="2.5" ry="5" fill="#111"/>
+        <ellipse cx="70" cy="60" rx="2.5" ry="5" fill="#111"/>
+        <circle cx="51" cy="58" r="1.5" fill="white"/><circle cx="71" cy="58" r="1.5" fill="white"/>
+        <ellipse cx="43" cy="69" rx="6" ry="4" fill="#FFB6C1" opacity="0.55"/>
+        <ellipse cx="77" cy="69" rx="6" ry="4" fill="#FFB6C1" opacity="0.55"/>
+        <path d="M58,73 L60,71 L62,73 L60,75 Z" fill="#FFB6C1"/>
+        <path d="M55,76 Q60,80 65,76" stroke="#C0705A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <line x1="35" y1="72" x2="54" y2="73" stroke="#E8A87A" stroke-width="1.2" opacity="0.8"/>
+        <line x1="35" y1="76" x2="54" y2="75" stroke="#E8A87A" stroke-width="1.2" opacity="0.8"/>
+        <line x1="66" y1="73" x2="85" y2="72" stroke="#E8A87A" stroke-width="1.2" opacity="0.8"/>
+        <line x1="66" y1="75" x2="85" y2="76" stroke="#E8A87A" stroke-width="1.2" opacity="0.8"/>
+        <ellipse cx="60" cy="106" rx="22" ry="14" fill="#E8834A"/>
+      </svg>`,
+      rabbit: `<svg viewBox="0 0 120 120">
+        <ellipse cx="42" cy="30" rx="9" ry="18" fill="#FFB6C1"/>
+        <ellipse cx="42" cy="30" rx="5" ry="13" fill="#FF8FA3"/>
+        <ellipse cx="78" cy="30" rx="9" ry="18" fill="#FFB6C1"/>
+        <ellipse cx="78" cy="30" rx="5" ry="13" fill="#FF8FA3"/>
+        <circle cx="60" cy="62" r="28" fill="#FFD6E0"/>
+        <circle cx="51" cy="59" r="5" fill="#333"/><circle cx="69" cy="59" r="5" fill="#333"/>
+        <circle cx="52.5" cy="57.5" r="2" fill="white"/><circle cx="70.5" cy="57.5" r="2" fill="white"/>
+        <ellipse cx="44" cy="66" rx="6" ry="4" fill="#FF69B4" opacity="0.5"/>
+        <ellipse cx="76" cy="66" rx="6" ry="4" fill="#FF69B4" opacity="0.5"/>
+        <ellipse cx="60" cy="67" rx="3.5" ry="2.5" fill="#FF69B4"/>
+        <path d="M53,72 Q60,79 67,72" stroke="#FF69B4" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="60" cy="104" rx="20" ry="14" fill="#FFD6E0"/>
+        <path d="M55,96 C52,93 50,95 53,97 C55,98 57,96 60,96 C63,96 65,98 67,97 C70,95 68,93 65,96" fill="#FF69B4"/>
+      </svg>`
+    };
+    return chars[type] || '';
+  },
+
+  sparkle() {
+    return `<svg viewBox="0 0 40 40">
+      <path d="M20,4 L22,18 L36,20 L22,22 L20,36 L18,22 L4,20 L18,18 Z" fill="#FFD700"/>
+      <circle cx="8" cy="8" r="2" fill="#FFE57A"/>
+      <circle cx="32" cy="8" r="2" fill="#FFE57A"/>
+      <circle cx="8" cy="32" r="2" fill="#FFE57A"/>
+      <circle cx="32" cy="32" r="2" fill="#FFE57A"/>
+    </svg>`;
+  },
+
+  heart() {
+    return `<svg viewBox="0 0 40 40">
+      <path d="M20,34 C20,34 5,22 5,12 C5,5 10,2 14,5 C16,6 20,11 20,11 C20,11 24,6 26,5 C30,2 35,5 35,12 C35,22 20,34 20,34 Z" fill="#FF69B4"/>
+      <ellipse cx="14" cy="10" rx="4" ry="3" fill="white" opacity="0.4" transform="rotate(-25,14,10)"/>
+    </svg>`;
+  },
+
+  sticker(type) {
+    const stickers = {
+      star_reward: `<svg viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="38" fill="#FFF9C4" opacity="0.8"/>
+        <circle cx="40" cy="40" r="35" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+        <path d="M40,15 L45,30 L62,30 L48,40 L53,55 L40,46 L27,55 L32,40 L18,30 L35,30 Z" fill="white"/>
+        <text x="40" y="70" text-anchor="middle" font-size="8" font-weight="bold" fill="#FF8C00">すごい！</text>
+      </svg>`,
+      ribbon: `<svg viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="38" fill="#FFE4F0" opacity="0.9"/>
+        <circle cx="40" cy="40" r="35" fill="#FF69B4" stroke="#FF1493" stroke-width="2"/>
+        <path d="M40,38 C36,30 26,26 24,32 C22,38 30,44 40,40" fill="#FF1493"/>
+        <path d="M40,38 C44,30 54,26 56,32 C58,38 50,44 40,40" fill="#FF1493"/>
+        <circle cx="40" cy="39" r="6" fill="#FFB6C1"/>
+        <circle cx="40" cy="39" r="4" fill="white"/>
+        <path d="M36,42 C32,50 28,54 30,58" stroke="#FF1493" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M44,42 C48,50 52,54 50,58" stroke="#FF1493" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <text x="40" y="72" text-anchor="middle" font-size="7" font-weight="bold" fill="#FFE4F0">やったね！</text>
+      </svg>`,
+      heart_reward: `<svg viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="38" fill="#FFE4F0" opacity="0.8"/>
+        <circle cx="40" cy="40" r="35" fill="#FF8FA3" stroke="#FF69B4" stroke-width="2"/>
+        <path d="M40,55 C40,55 18,40 18,27 C18,18 24,14 30,18 C33,20 40,28 40,28 C40,28 47,20 50,18 C56,14 62,18 62,27 C62,40 40,55 40,55 Z" fill="white"/>
+        <text x="40" y="72" text-anchor="middle" font-size="7" font-weight="bold" fill="white">だいすき！</text>
+      </svg>`
+    };
+    return stickers[type] || '';
+  }
+};
+
+// ===== APP STATE =====
+const state = {
+  screen: 'title',
+  customer: null,
+  order: null,
+  cake: { baseShape: null, creamColor: null, toppings: [] },
+  settings: { voiceOn: true, bgmOn: true, difficulty: 'easy' },
+  reward: null,
+  playCount: 0
+};
+
+// ===== CONSTANTS =====
+const customers = [
+  { id: 'bear', nameJa: 'くまさん', charType: 'bear' },
+  { id: 'cat', nameJa: 'ねこさん', charType: 'cat' },
+  { id: 'rabbit', nameJa: 'うさぎさん', charType: 'rabbit' }
+];
+
+const creamColors = [
+  { id: 'white', hex: '#fff5f5', label: 'しろ' },
+  { id: 'pink', hex: '#FFB6C1', label: 'ピンク' },
+  { id: 'yellow', hex: '#FFF8DC', label: 'きいろ' },
+  { id: 'blue', hex: '#B0E0E6', label: 'みずいろ' }
+];
+
+const toppingTypes = [
+  { id: 'strawberry', label: 'いちご' },
+  { id: 'banana', label: 'バナナ' },
+  { id: 'cherry', label: 'さくらんぼ' },
+  { id: 'cookie', label: 'クッキー' },
+  { id: 'heart', label: 'ハート' },
+  { id: 'candle', label: 'ろうそく' }
+];
+
+const toppingSlots = {
+  round: [
+    { x: 25, y: 15 }, { x: 42, y: 10 }, { x: 60, y: 15 },
+    { x: 33, y: 32 }, { x: 50, y: 28 }, { x: 67, y: 32 }
+  ],
+  heart: [
+    { x: 30, y: 12 }, { x: 45, y: 8 }, { x: 60, y: 12 },
+    { x: 37, y: 28 }, { x: 52, y: 24 }, { x: 45, y: 38 }
+  ],
+  star: [
+    { x: 45, y: 8 }, { x: 28, y: 22 }, { x: 62, y: 22 },
+    { x: 33, y: 38 }, { x: 57, y: 38 }, { x: 45, y: 50 }
+  ]
+};
+
+const numberWords = ['', 'ひとつ', 'ふたつ', 'みっつ'];
+const countWords = ['', '1こ', '2こ', '3こ'];
+
+// ===== SPEECH SYNTHESIS =====
+function speak(text) {
+  if (!state.settings.voiceOn) return;
+  try {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ja-JP';
+    utter.rate = 0.85;
+    utter.pitch = 1.3;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  } catch (e) { /* ignore */ }
+}
+
+// ===== SOUND EFFECTS (Web Audio API) =====
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTone(freq, duration, type = 'sine') {
+  if (!state.settings.voiceOn) return;
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) { /* ignore */ }
+}
+
+function sfxTap() { playTone(880, 0.1); }
+function sfxSelect() { playTone(660, 0.15); playTone(880, 0.15); }
+function sfxSparkle() {
+  playTone(1200, 0.1);
+  setTimeout(() => playTone(1500, 0.1), 80);
+  setTimeout(() => playTone(1800, 0.15), 160);
+}
+function sfxServe() {
+  playTone(523, 0.15);
+  setTimeout(() => playTone(659, 0.15), 120);
+  setTimeout(() => playTone(784, 0.2), 240);
+}
+function sfxApplause() {
+  for (let i = 0; i < 8; i++) {
+    setTimeout(() => playTone(200 + Math.random() * 600, 0.08, 'triangle'), i * 60);
+  }
+}
+
+// ===== ORDER GENERATION =====
+function generateOrder(difficulty) {
+  const customer = customers[Math.floor(Math.random() * customers.length)];
+  const conditions = [];
+  let text = '';
+
+  if (difficulty === 'easy') {
+    const r = Math.random();
+    if (r < 0.5) {
+      const color = creamColors[Math.floor(Math.random() * creamColors.length)];
+      conditions.push({ type: 'creamColor', value: color.id });
+      text = `${color.label}のケーキが いいな`;
+    } else {
+      const topping = toppingTypes[Math.floor(Math.random() * toppingTypes.length)];
+      const count = Math.random() < 0.5 ? 1 : 2;
+      conditions.push({ type: 'toppingCount', topping: topping.id, count });
+      text = `${topping.label}を ${numberWords[count]} のせてね`;
+    }
+  } else {
+    // normal: 2 conditions
+    const color = creamColors[Math.floor(Math.random() * creamColors.length)];
+    conditions.push({ type: 'creamColor', value: color.id });
+
+    const topping = toppingTypes[Math.floor(Math.random() * toppingTypes.length)];
+    const count = 1 + Math.floor(Math.random() * 3);
+    conditions.push({ type: 'toppingCount', topping: topping.id, count });
+
+    text = `${color.label}のクリームで\n${topping.label}を ${numberWords[count]} のせてね`;
+  }
+
+  return {
+    id: 'o' + Date.now(),
+    customerId: customer.id,
+    customer,
+    text,
+    conditions
+  };
+}
+
+// ===== EVALUATION =====
+function evaluateCake(order, cake) {
+  const total = order.conditions.length;
+  let matched = 0;
+
+  for (const cond of order.conditions) {
+    if (cond.type === 'creamColor') {
+      if (cake.creamColor === cond.value) matched++;
+    }
+    if (cond.type === 'toppingExists') {
+      if (cake.toppings.some(t => t.type === cond.topping)) matched++;
+    }
+    if (cond.type === 'toppingCount') {
+      const count = cake.toppings.filter(t => t.type === cond.topping).length;
+      if (count === cond.count) matched++;
+    }
+  }
+
+  const score = total === 0 ? 1 : matched / total;
+  const reaction = score === 1 ? 'great' : score >= 0.5 ? 'good' : 'normal';
+  return { matched, total, score, reaction };
+}
+
+// ===== SCREEN NAVIGATION =====
+function goScreen(name) {
+  sfxTap();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  state.screen = name;
+
+  // Screen-specific init
+  if (name === 'order') initOrderScreen();
+  if (name === 'base') initBaseScreen();
+  if (name === 'cream') initCreamScreen();
+  if (name === 'topping') initToppingScreen();
+  if (name === 'result') initResultScreen();
+  if (name === 'reward') initRewardScreen();
+}
+
+// ===== TITLE =====
+document.getElementById('title-char').innerHTML = SVG.character('rabbit_patissier');
+
+// Generate sparkle stars on title
+(function() {
+  const container = document.getElementById('title-sparkles');
+  const positions = [
+    {x:10,y:12}, {x:80,y:8}, {x:25,y:70}, {x:75,y:65},
+    {x:50,y:5}, {x:15,y:40}, {x:85,y:35}, {x:60,y:80}
+  ];
+  positions.forEach((p, i) => {
+    const star = document.createElement('div');
+    star.className = 'title-star';
+    star.style.left = p.x + '%';
+    star.style.top = p.y + '%';
+    star.style.animationDelay = (i * 0.4) + 's';
+    star.innerHTML = SVG.sparkle();
+    container.appendChild(star);
+  });
+})();
+
+let titleTimer;
+function startTitleIdle() {
+  clearTimeout(titleTimer);
+  titleTimer = setTimeout(() => speak('ケーキをつくろう！'), 5000);
+}
+startTitleIdle();
+
+function startGame() {
+  clearTimeout(titleTimer);
+  sfxSelect();
+  state.order = generateOrder(state.settings.difficulty);
+  state.cake = { baseShape: null, creamColor: null, toppings: [] };
+  state.reward = null;
+  goScreen('order');
+}
+
+// ===== ORDER SCREEN =====
+function initOrderScreen() {
+  const order = state.order;
+  if (!order) return;
+
+  document.getElementById('order-customer').innerHTML = SVG.character(order.customer.charType);
+  document.getElementById('customer-name').textContent = order.customer.nameJa;
+  document.getElementById('order-text').innerHTML = order.text.replace(/\n/g, '<br>');
+
+  // Build order icons
+  const iconsEl = document.getElementById('order-icons');
+  iconsEl.innerHTML = '';
+  for (const cond of order.conditions) {
+    if (cond.type === 'creamColor') {
+      const colorInfo = creamColors.find(c => c.id === cond.value);
+      const dot = document.createElement('div');
+      dot.className = 'order-icon-color';
+      dot.style.background = colorInfo.hex;
+      iconsEl.appendChild(dot);
+    }
+    if (cond.type === 'toppingCount' || cond.type === 'toppingExists') {
+      const wrap = document.createElement('span');
+      wrap.innerHTML = SVG.topping(cond.topping || cond.topping);
+      if (cond.count) {
+        const num = document.createElement('span');
+        num.textContent = ' x' + cond.count;
+        num.style.fontWeight = '700';
+        wrap.appendChild(num);
+      }
+      iconsEl.appendChild(wrap);
+    }
+  }
+
+  setTimeout(() => speak(order.text.replace(/\n/g, '、')), 400);
+}
+
+function replayOrder() {
+  sfxTap();
+  if (state.order) speak(state.order.text.replace(/\n/g, '、'));
+}
+
+// ===== BASE SELECT =====
+function initBaseScreen() {
+  const container = document.getElementById('base-choices');
+  container.innerHTML = '';
+  const shapes = [
+    { id: 'round', label: 'まる' },
+    { id: 'heart', label: 'ハート' },
+    { id: 'star', label: 'ほし' }
+  ];
+
+  shapes.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'choice-card' + (state.cake.baseShape === s.id ? ' selected' : '');
+    card.innerHTML = SVG.cakeBase(s.id) + `<span class="choice-label">${s.label}</span>`;
+    card.onclick = () => selectBase(s.id);
+    container.appendChild(card);
+  });
+
+  updateBasePreview();
+  updateBaseNextBtn();
+  speak('すきな かたちを えらんでね');
+}
+
+function selectBase(shape) {
+  sfxSelect();
+  state.cake.baseShape = shape;
+  document.querySelectorAll('#base-choices .choice-card').forEach((c, i) => {
+    c.classList.toggle('selected', ['round', 'heart', 'star'][i] === shape);
+  });
+  updateBasePreview();
+  updateBaseNextBtn();
+}
+
+function updateBasePreview() {
+  const el = document.getElementById('base-preview');
+  if (state.cake.baseShape) {
+    el.innerHTML = `<div class="cake-base">${SVG.cakeBase(state.cake.baseShape)}</div>`;
+  } else {
+    el.innerHTML = '<div style="text-align:center;padding-top:60px;color:#ccc;font-size:0.9rem">えらんでね</div>';
+  }
+}
+
+function updateBaseNextBtn() {
+  document.getElementById('base-next-btn').disabled = !state.cake.baseShape;
+}
+
+// ===== CREAM SELECT =====
+function initCreamScreen() {
+  const container = document.getElementById('cream-choices');
+  container.innerHTML = '';
+
+  creamColors.forEach(c => {
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.flexDirection = 'column';
+    wrap.style.alignItems = 'center';
+
+    const btn = document.createElement('button');
+    btn.className = 'color-btn' + (state.cake.creamColor === c.id ? ' selected' : '');
+    btn.style.background = c.hex;
+    btn.onclick = () => selectCream(c.id);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'color-btn-label';
+    lbl.textContent = c.label;
+
+    wrap.appendChild(btn);
+    wrap.appendChild(lbl);
+    container.appendChild(wrap);
+  });
+
+  updateCreamPreview();
+  updateCreamNextBtn();
+  speak('クリームを えらぼう');
+}
+
+function selectCream(colorId) {
+  sfxSelect();
+  state.cake.creamColor = colorId;
+  const colorInfo = creamColors.find(c => c.id === colorId);
+  speak(colorInfo.label + '！');
+
+  document.querySelectorAll('#cream-choices .color-btn').forEach(btn => {
+    const parent = btn.parentElement;
+    const label = parent.querySelector('.color-btn-label').textContent;
+    btn.classList.toggle('selected', creamColors.find(c => c.label === label)?.id === colorId);
+  });
+
+  updateCreamPreview();
+  updateCreamNextBtn();
+}
+
+function updateCreamPreview() {
+  const el = document.getElementById('cream-preview');
+  if (!state.cake.baseShape) { el.innerHTML = ''; return; }
+  const colorInfo = creamColors.find(c => c.id === state.cake.creamColor);
+  let html = `<div class="cake-base">${SVG.cakeBase(state.cake.baseShape)}</div>`;
+  if (colorInfo) {
+    html += `<div class="cake-cream">${SVG.cream(state.cake.baseShape, colorInfo.hex)}</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function updateCreamNextBtn() {
+  document.getElementById('cream-next-btn').disabled = !state.cake.creamColor;
+}
+
+// ===== TOPPING SCREEN =====
+function initToppingScreen() {
+  const palette = document.getElementById('topping-palette');
+  palette.innerHTML = '';
+
+  toppingTypes.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'topping-btn';
+    btn.innerHTML = SVG.topping(t.id) + `<span class="topping-btn-label">${t.label}</span>`;
+    btn.onclick = () => addTopping(t.id);
+    palette.appendChild(btn);
+  });
+
+  renderToppingPreview();
+  renderToppingCounter();
+  speak('トッピングしよう');
+}
+
+function addTopping(type) {
+  if (!state.cake.baseShape) return;
+  const slots = toppingSlots[state.cake.baseShape];
+  if (state.cake.toppings.length >= slots.length) {
+    // Full - shake
+    const preview = document.getElementById('topping-preview');
+    preview.classList.add('shake');
+    setTimeout(() => preview.classList.remove('shake'), 300);
+    speak('もう いっぱい！');
+    return;
+  }
+
+  sfxTap();
+  state.cake.toppings.push({
+    type,
+    slotIndex: state.cake.toppings.length,
+    placedAt: Date.now()
+  });
+
+  const count = state.cake.toppings.length;
+  if (count <= 3) speak(numberWords[count] + '！');
+
+  renderToppingPreview();
+  renderToppingCounter();
+}
+
+function undoTopping() {
+  sfxTap();
+  if (state.cake.toppings.length > 0) {
+    state.cake.toppings.pop();
+    renderToppingPreview();
+    renderToppingCounter();
+  }
+}
+
+function resetToppings() {
+  sfxTap();
+  state.cake.toppings = [];
+  renderToppingPreview();
+  renderToppingCounter();
+}
+
+function renderToppingPreview() {
+  const el = document.getElementById('topping-preview');
+  if (!state.cake.baseShape) { el.innerHTML = ''; return; }
+
+  const colorInfo = creamColors.find(c => c.id === state.cake.creamColor);
+  let html = `<div class="cake-base">${SVG.cakeBase(state.cake.baseShape)}</div>`;
+  if (colorInfo) {
+    html += `<div class="cake-cream">${SVG.cream(state.cake.baseShape, colorInfo.hex)}</div>`;
+  }
+
+  const slots = toppingSlots[state.cake.baseShape];
+  state.cake.toppings.forEach((t, i) => {
+    const slot = slots[i];
+    if (!slot) return;
+    html += `<div class="topping-item" style="left:${slot.x}%;top:${slot.y}%">${SVG.topping(t.type)}</div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function renderToppingCounter() {
+  const el = document.getElementById('topping-counter');
+  const counts = {};
+  state.cake.toppings.forEach(t => {
+    counts[t.type] = (counts[t.type] || 0) + 1;
+  });
+
+  if (Object.keys(counts).length === 0) {
+    el.innerHTML = '<span style="color:#bbb">まだ なにも のせてないよ</span>';
+    return;
+  }
+
+  el.innerHTML = Object.entries(counts).map(([type, count]) => {
+    const info = toppingTypes.find(t => t.id === type);
+    return `<span class="topping-counter-item">${SVG.topping(type)} ${info.label} ${count}こ</span>`;
+  }).join('');
+}
+
+// ===== RESULT SCREEN =====
+function initResultScreen() {
+  // Render cake
+  const cakeEl = document.getElementById('result-cake');
+  const colorInfo = creamColors.find(c => c.id === state.cake.creamColor);
+  let html = `<div class="cake-base">${SVG.cakeBase(state.cake.baseShape)}</div>`;
+  if (colorInfo) {
+    html += `<div class="cake-cream">${SVG.cream(state.cake.baseShape, colorInfo.hex)}</div>`;
+  }
+  const slots = toppingSlots[state.cake.baseShape];
+  state.cake.toppings.forEach((t, i) => {
+    const slot = slots[i];
+    if (!slot) return;
+    html += `<div class="topping-item" style="left:${slot.x}%;top:${slot.y}%">${SVG.topping(t.type)}</div>`;
+  });
+  cakeEl.innerHTML = html;
+  cakeEl.style.display = '';
+  cakeEl.classList.remove('serve-anim');
+
+  // Customer
+  document.getElementById('result-customer').innerHTML = SVG.character(state.order.customer.charType);
+
+  // Reset state
+  document.getElementById('result-reaction').style.display = 'none';
+  document.getElementById('result-buttons').style.display = 'flex';
+  document.getElementById('result-after').style.display = 'none';
+
+  speak('できあがり！');
+  sfxSparkle();
+}
+
+function serveCake() {
+  sfxServe();
+  const cakeEl = document.getElementById('result-cake');
+  cakeEl.classList.add('serve-anim');
+
+  document.getElementById('result-buttons').style.display = 'none';
+
+  setTimeout(() => {
+    cakeEl.style.display = 'none';
+    const eval_ = evaluateCake(state.order, state.cake);
+    state.reward = {
+      hearts: eval_.reaction === 'great' ? 3 : eval_.reaction === 'good' ? 2 : 1,
+      stickerId: eval_.reaction === 'great' ? 'star_reward' : eval_.reaction === 'good' ? 'ribbon' : 'heart_reward',
+      reaction: eval_.reaction
+    };
+
+    const reactionEl = document.getElementById('result-reaction');
+    const texts = {
+      great: 'わあ！ ぴったり！\nだいすき！',
+      good: 'おいしそう！\nありがとう！',
+      normal: 'すてき！\nありがとう！'
+    };
+    reactionEl.innerHTML = texts[eval_.reaction].replace(/\n/g, '<br>');
+    reactionEl.style.display = 'block';
+    reactionEl.style.color = eval_.reaction === 'great' ? '#E8527A' : eval_.reaction === 'good' ? '#FF8FA3' : '#FFB085';
+
+    speak(texts[eval_.reaction].replace(/\n/g, '、'));
+    if (eval_.reaction === 'great') sfxApplause();
+
+    document.getElementById('result-after').style.display = 'flex';
+  }, 800);
+}
+
+// ===== REWARD SCREEN =====
+function initRewardScreen() {
+  const reward = state.reward;
+  if (!reward) return;
+
+  // Hearts
+  const heartsEl = document.getElementById('reward-hearts');
+  let heartsHtml = '';
+  for (let i = 0; i < reward.hearts; i++) {
+    heartsHtml += `<div class="heart-icon">${SVG.heart()}</div>`;
+  }
+  heartsEl.innerHTML = heartsHtml;
+
+  // Text
+  const texts = { great: 'じょうず！ すごいね！', good: 'かわいいケーキ！', normal: 'またつくってね！' };
+  document.getElementById('reward-text').textContent = texts[reward.reaction];
+
+  // Sticker
+  document.getElementById('reward-sticker').innerHTML = SVG.sticker(reward.stickerId);
+
+  speak('よくできました！');
+  sfxSparkle();
+
+  state.playCount++;
+}
+
+function nextCustomer() {
+  sfxSelect();
+  state.order = generateOrder(state.settings.difficulty);
+  state.cake = { baseShape: null, creamColor: null, toppings: [] };
+  state.reward = null;
+  goScreen('order');
+}
+
+// ===== SETTINGS =====
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem('cakeshop_settings');
+    if (saved) Object.assign(state.settings, JSON.parse(saved));
+  } catch (e) { /* ignore */ }
+}
+
+function saveSettings() {
+  try { localStorage.setItem('cakeshop_settings', JSON.stringify(state.settings)); } catch (e) { /* ignore */ }
+}
+
+function openSettings() {
+  sfxTap();
+  updateSettingsUI();
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() {
+  sfxTap();
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function updateSettingsUI() {
+  document.getElementById('toggle-voice').className = 'toggle' + (state.settings.voiceOn ? ' on' : '');
+  document.getElementById('toggle-bgm').className = 'toggle' + (state.settings.bgmOn ? ' on' : '');
+  document.getElementById('diff-easy').className = 'diff-btn' + (state.settings.difficulty === 'easy' ? ' active' : '');
+  document.getElementById('diff-normal').className = 'diff-btn' + (state.settings.difficulty === 'normal' ? ' active' : '');
+}
+
+function toggleSettingVoice() {
+  state.settings.voiceOn = !state.settings.voiceOn;
+  updateSettingsUI();
+  saveSettings();
+}
+
+function toggleSettingBgm() {
+  state.settings.bgmOn = !state.settings.bgmOn;
+  updateSettingsUI();
+  saveSettings();
+}
+
+function setDifficulty(d) {
+  state.settings.difficulty = d;
+  updateSettingsUI();
+  saveSettings();
+}
+
+function toggleSound() {
+  state.settings.voiceOn = !state.settings.voiceOn;
+  document.getElementById('sound-label').textContent = state.settings.voiceOn ? 'おと' : 'おと×';
+  saveSettings();
+}
+
+// ===== INIT =====
+loadSettings();
+document.getElementById('sound-label').textContent = state.settings.voiceOn ? 'おと' : 'おと×';
+
+// Close modal on overlay click
+document.getElementById('settings-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+</script>
+</body>
+</html>
