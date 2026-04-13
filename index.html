@@ -1071,15 +1071,39 @@ const numberWords = ['', 'ひとつ', 'ふたつ', 'みっつ'];
 const countWords = ['', '1こ', '2こ', '3こ'];
 
 // ===== SPEECH SYNTHESIS =====
-function speak(text) {
+function speak(text, emotion = 'normal') {
   if (!state.settings.voiceOn) return;
   try {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'ja-JP';
-    utter.rate = 0.85;
-    utter.pitch = 1.3;
     speechSynthesis.cancel();
-    speechSynthesis.speak(utter);
+    if (emotion === 'excited') {
+      // Split into short phrases for more energetic delivery
+      const phrases = text.split(/[、。！\n]/).filter(s => s.trim());
+      let delay = 0;
+      phrases.forEach((phrase, i) => {
+        setTimeout(() => {
+          const utter = new SpeechSynthesisUtterance(phrase + '！');
+          utter.lang = 'ja-JP';
+          utter.rate = 1.05;
+          utter.pitch = 1.7;
+          utter.volume = 1.0;
+          speechSynthesis.speak(utter);
+        }, delay);
+        delay += 600;
+      });
+    } else if (emotion === 'happy') {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'ja-JP';
+      utter.rate = 0.95;
+      utter.pitch = 1.5;
+      utter.volume = 1.0;
+      speechSynthesis.speak(utter);
+    } else {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'ja-JP';
+      utter.rate = 0.85;
+      utter.pitch = 1.3;
+      speechSynthesis.speak(utter);
+    }
   } catch (e) { /* ignore */ }
 }
 
@@ -1514,7 +1538,7 @@ function initResultScreen() {
   document.getElementById('result-buttons').style.display = 'flex';
   document.getElementById('result-after').style.display = 'none';
 
-  speak('できあがり！');
+  speak('できあがり！', 'happy');
   sfxSparkle();
 }
 
@@ -1544,7 +1568,8 @@ function serveCake() {
     reactionEl.style.display = 'block';
     reactionEl.style.color = eval_.reaction === 'great' ? '#E8527A' : eval_.reaction === 'good' ? '#FF8FA3' : '#FFB085';
 
-    speak(texts[eval_.reaction].replace(/\n/g, '、'));
+    const emotion = eval_.reaction === 'great' ? 'excited' : 'happy';
+    speak(texts[eval_.reaction].replace(/\n/g, '、'), emotion);
     if (eval_.reaction === 'great') sfxApplause();
 
     document.getElementById('result-after').style.display = 'flex';
@@ -1571,7 +1596,7 @@ function initRewardScreen() {
   // Sticker
   document.getElementById('reward-sticker').innerHTML = SVG.sticker(reward.stickerId);
 
-  speak('よくできました！');
+  speak('よくできました！', 'excited');
   sfxSparkle();
 
   state.playCount++;
